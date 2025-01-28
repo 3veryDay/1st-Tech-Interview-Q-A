@@ -135,7 +135,15 @@ d
 <summary>폴링(Polling)이란 무엇일까요?</summary>
 
 <hr>
+인터럽트처럼 CPU가 다른 프로세스를 실행하는 동안 디바이스로부터 발생하는 이벤트를 처리하는 방법 중 하나이다.
 
+폴링 방식은 특정 주기마다 CPU가 디바이스들이 serving이 필요한지 체크하기 때문에 CPU 사이클 낭비가 발생한다.
+ ( 폴링은 특정 주기마다 CPU가 디바이스를 poll해야지 serving이 가능하지만, 인터럽트는 언제든지 발생할 수 있다)
+또한, 인터럽트와 다르게 폴링은 소프트웨어적으로 시그널을 확인하는 방식이다.
+
+폴링은 구현이 쉽고, 우선순위의 변경이 용이하기 때문에 쓰인다. 
+
+>인터럽트는 폴링 방식과 다르게 하드웨어로 지원을 받아야한다는 제약이 있다. 하지만, 폴링 방식보다 신속하게 대응하는 것이 가능해서 필수적인 기능이다. 즉, 인터럽트는 상황을 예측하기 힘든 경우 컨트롤러가 가장 빠르게 대응할 수 있는 방식이다. 
 <hr>
 </details>
 
@@ -143,6 +151,17 @@ d
 <summary>Mode bit이란 무엇일까요?</summary>
 
 <hr>
+Mode BIT는 사용자 장치의 잘못된 수행으로 다른 프로그램 및 운영체제에 피해가 가지 않도록 하는 보호 장치이다.
+
+Mode BIT은 하드웨어적으로 두가지 모드의 operation 을 지원한다.
+- 0이면 Kernel mode( OS 코드 수행 )
+- 1이면 User mode( 사용자 프로그램 수행 )
+
+Privileged Instruction는 파일을 다루거나 I/O에게 request를 하는 등, OS만 실행할 수 있는 Instruction으로 Kernel Mode에서만 수행이 가능하다.
+
+이를 User Mode에서 실행하려고 하면, 프로그램을 종료하고 Software Interrupt가 발생한다. 
+
+User program이 하드웨어에 접근하려면 **system call**을 통해서 실행해야 한다.
 
 <hr>
 </details>
@@ -151,6 +170,11 @@ d
 <summary>System Call이란 무엇일까요?</summary>
 
 <hr>
+System Call이란 (User program이 접근하지 못하는) OS만의 privileged Instruction을 실행하기 위해서는 OS에게 특정 일들을 수행해달라고 요청하는 것으로 **Software Interrupt의 일종**이다.
+
+User program과 OS사이의 인터페이스를 제공한다.
+
+System Call 발생 -> mode bit 0으로 변경 -> 요청 작업 처리 -> mode bit 1로 변경 -> 유저 프로세스 수
 
 <hr>
 </details>
@@ -159,6 +183,11 @@ d
 <summary>System Call과 Function Call의 차이점에 대해 설명해주세요</summary>
 
 <hr>
+![image](https://github.com/user-attachments/assets/41117340-62cb-489f-9dcc-8521115589cd)
+
+System call은 OS의 도움을 받아 OS의 function을 불러서 수행하는 것이다.
+
+Function call으 같은 프로세스 내에서 프로세스 내에 있는 function을 불러서 수행하는 것이다.
 <hr>
 </details>
 
@@ -166,6 +195,19 @@ d
 <summary>DMA란 무엇일까요?</summary>
 
 <hr>
+DMA(DIrect Memory Access)
+
+등장 배경
+
+모든 메모리의 접근은 CPU에 의해 접근을 해야하며, 메모리의 접근을 위해서는 CPU에게 인터럽트를 발생시킨 후, 부탁해야 했다. 그렇기 때문에, 모든 메모리 연산에는 interrupt을 발생시키고, CPU는 interrupt을 처리하기 위해서 local buffer와 memory 사이에서 데이터를 옮기는 일까지 진행했다. 이는 CPU 효율성을 많이 떨어뜨렸고, 이를 극복하기 위해서 CPU이외에 메모리 접근이 가능한 장치인 DMA이 등장했다.
+
+DMA 설명
+
+DMA는 일종의 컨트롤러 장치로, CPU가 입출력 장치들의 메모리 접근 요청에 의해 자주 인터럽트를 당하는 것을 막아주는 역할을 한다.
+
+보통 CPU가 처리하는 로컬 버퍼에서 메모리로 데이터를 읽어오는 작업을 DMA가 대행하게 된다.
+
+DMA는 바이트 단위가 아닌 블록 단위로 데이터를 메모리로 읽어온 후!! CPU에게 인터럽트를 발생시켜서 작업 완료를 알린다. 이는 CPU 인터럽트 빈도를 줄여서 효율성을 높인다.
 
 <hr>
 </details>
@@ -175,6 +217,10 @@ d
 <summary>프로세스와 프로세서의 차이에 대해 설명해주세요.</summary>
 
 <hr>
+프로세스는 코드로 작성된 프로그램이 메모리에 적재되어 사용할 수 있는 상태가 된 것이다.
+즉, 메모리 상에서 실행중인 프로그램을 프로세스라고 하고
+
+프로세서는 CPU를 의미한다.
 
 <hr>
 </details>

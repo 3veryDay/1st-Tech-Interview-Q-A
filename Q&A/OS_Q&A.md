@@ -315,7 +315,9 @@ Code는 공유하고, Stack, Data는 스택 구조의 특성과 전역 변수의
 <summary>프로세스의 Running State에서 CPU 자원을 뺐기는 3가지 상황에 대해 설명해주세요</summary>
 
 <hr>
-
+1. Interrupt가 발생했을 때(timer도 포함)
+2. I/O request 를 하기 위해 system call을 하여 watiting 상태로 넘어가는 경우
+3. Process의 수행이 끝나서 terminated로 되는 경우
 <hr>
 </details>
 
@@ -323,6 +325,14 @@ Code는 공유하고, Stack, Data는 스택 구조의 특성과 전역 변수의
 <summary>OS는 프로세스의 정보를 어떻게 관리하며 어떤 데이터들을 저장하고 있는지 설명해주세요 (hint.PCB)</summary>
 
 <hr>
+각각의 process들을 OS의 관리를 받게 되는데, 이때 OS는 process의 현재 정보들을 알기 위해서 PCB(Process Control Block)을 사용한다.
+
+PCB는 아래의 정보를 저장하고 있다.
+1. process state
+2. process number : process id(Pid)
+3. Program Counter(PC)
+4. CPU register - contes of registers in CPU
+5. etc ( Owner, CPU usage, memory usage, process priority, IO status info)
 
 <hr>
 </details>
@@ -331,6 +341,19 @@ Code는 공유하고, Stack, Data는 스택 구조의 특성과 전역 변수의
 <summary>PCB가 왜 필요할까요?</summary>
 
 <hr>
+CPU core는 여러 개의 프로세스가 공유해서 사용한다. 이때 프로세스의 교체 (Context Switching)이 발생할 때마다 실행중인 CPU에 올라간 프로세스의 정보를 변경해야 하고, 프로세스들은 추후 CPU 이용 순서가 왔을 때, 이전 작업 내용을 이어서 하기 위해 정보를 저장해야할 필요가 있다. OS는 프로세스의 정보를 PCB를 통해 저장하고 관리하고 있다.
+
+Context Switching이 발생할 때, PCB의 값들을 변경하게 되며 PCB의 정보를 통해 연산을 이어서 한다. 새로 해야할 작업의 상태를 알아야 하기 때문에 존재하는 프로세스에 관한 모든 정보를 저장하는 임시 저장소이다. (프로세스가 생성되면 메모리에 해당 프로세스의 PCB가 함께 생성되고, 종료 시 삭제된다. )
+
+따라서, OS는 PCB에 담긴 프로세스 고유 정보를 통해 프로세스를 관리하며, 프로세스의 실행 상태를 파악하고, 우선순위를 조정하며 스케줄링을 수행하고, 다른 프로세스와의 동기화를 제어한다.
+
+이러한 PCB를 통한 Context Switching은 사용자에게 빠른 반응성과 동시성을 제공하지만, switching 되는 순간, 발생하는 살짝의 간극을 context switching overhead라고 한다. 
+
+이 overhead는 다음과 같은 행위에서 발생된다.
+1. PCB 저장 및 복원
+2. CPU 캐시 메모리 무효화에 딸ㄴ 비용
+3. 프로세스 스케줄링 비용
+
 
 <hr>
 </details>
@@ -339,6 +362,12 @@ Code는 공유하고, Stack, Data는 스택 구조의 특성과 전역 변수의
 <summary>PCB는 어떻게 관리될까요??</summary>
 
 <hr>
+커널의 data 영역에는 CPU, memory, disk 등이 있다. 그리고 각각의 process 의 정보들을 갖고 있는 PCB가 존재한다. 즉, PCB는 커널의 data영역에서 관리된다.
+
+이때 PCB들은 linked list 방식으로 관리가 된다. PCB List head에 PCB가 생성될 때마다 붙게 된다. 주소값으로 연결이 이루어져있는 연결 리스트이기 때문에 삽입 삭제가 용이하다.
+
+프로세스가 생성되면 동시에 PCB도 생성되고, 프로세스가 종료되면 동시에 PCB도 제거된다.
+![image](https://github.com/user-attachments/assets/24d7f63a-b07a-41aa-9fb7-fb17cbac88a4)
 
 <hr>
 </details>
@@ -347,6 +376,16 @@ Code는 공유하고, Stack, Data는 스택 구조의 특성과 전역 변수의
 <summary>Process Context란 무엇일까요?</summary>
 
 <hr>
+Process Context란 프로세스가 현재 어떤 상태에서 수행되고 있는 지 정확하게 규명하기 위해 필요한 정보를 의미한다.
+
+시분할 시스템에서는 CPU의 제어권을 공유하기 때문에, 프로세스를 재개하는 시점에 대한 정보를 알기 위해서 process context를 사용한다.
+
+process context에는 프로세스의 주소공간, 레지스터의 값, 시스템 콜 등을 통해 커널에서 수행한 일의 상태, 프로세스에 관해 커널이 관리하고 있는 각종 정보등을 포함한다.
+
+process context의 내용은 크게 3가지로 나뉜다.
+1. 하드웨어 문맥 : CPU의 수행상태로, PC와 register에 저장한 값들
+2. 프로셋 주소 공간 : 코드, 데이터 스택으로 구성되는 주소 공간
+3. 커널 상의 문맥 : PCB, kernel stack와 같은 자료 구
 
 <hr>
 </details>
@@ -355,7 +394,19 @@ Code는 공유하고, Stack, Data는 스택 구조의 특성과 전역 변수의
 <summary>IPC란 무엇일까요?</summary>
 
 <hr>
+OS가 제공하는 프로세스간 협력 메커니즘, Inter-Process Communication이다. 즉, IPC란 하나의 컴퓨터 안에서 실행중인 서로 다른 프로세스 간 발생하는 통신이다.
 
+IPC는 대표적으로 Shared Memory와 Message Passing이 있다.
+
+Message Passing은 두 프로세스 사이에 communication link을 생성해서 커널의 send(), recieve() 연산을 토해 메시지를 주고 받는다. 그리고 send와 recieve 연산은 system call을 통해 사용한다.
+
+메시지 전달은 전송 대상이 다른 프로세스인지, 아니면 메일 박스라는 일종의 저장공간인지에 따라서 직접 통신과 간접 통신으로 나뉜다. 
+
+Shared Memory는 데이터 자체를 공유하도록 지원하는 것이다. 
+
+Shared Memory를 사용하면 특수한 공간이 생겨, process들이 각자 자신의 공간이라고 생각하면서 사용한다. 프로세스가 공유 메모리 할당을 커널에 요청하면 커널은 해당 프로세스에 메모리 공간을 할당해주고, 이후 모든 프로세스는 해당 메모리에 접근할 수 있다. 
+
+이는 중개자 없이 곧바로 메모리에 접근할 수 있기 때문에 IPC 중에서 가장 빠르게 작동한다. 하지만, 2개 이상의 process가 동시에 접근하려는 process syncronization 문제와 multi processor에서의 Cache Coherence Problem이 발생한다. 
 <hr>
 </details>
 
@@ -363,7 +414,15 @@ Code는 공유하고, Stack, Data는 스택 구조의 특성과 전역 변수의
 <summary>스레드란 무엇일까요?</summary>
 
 <hr>
+CP가 동작하는 가장 작은 단위를 THREAD라고 한다. 
 
+하나의 process는 한개 이상의 thread로 구성된다.
+
+IPC 없이 바로 shared memory에 접근이 가능하다
+
+process들끼리 바꾸는 context switching보다 thread을 변경하는 것이 overhead이 적다.
+
+새로운 thread을 만들 때에는 pc, register, stack에 대한 공간만 만들면 되기 때문에 process을 만드는 것보다 memory와 time 측면에서 이점이 있다. 
 <hr>
 </details>
 
@@ -371,7 +430,8 @@ Code는 공유하고, Stack, Data는 스택 구조의 특성과 전역 변수의
 <summary>하나의 프로세스 안에서 만들어진 스레드들간 공유하는 공간과 독립적으로 할당하는 공간은 각각 무엇이 있을까요?</summary>
 
 <hr>
-
+공유 : Code, Data (OS resource)
+각자 관리 : PC, Register, Stack (TCB로 관리)
 <hr>
 </details>
 

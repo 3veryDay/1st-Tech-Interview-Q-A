@@ -437,7 +437,22 @@ process들끼리 바꾸는 context switching보다 thread을 변경하는 것이
 
 <details>
 <summary>커널 스레드와 유저 스레드란 무엇일까요?</summary>
+ 
+#### 커널 스레드
+ - 운영체제가 직접 관리하는 스레드
+ - 논리적 코어와 매핑되는 시스템의 실제 스레드
+ - 커널 영역에서 스레드의 생성, 관리, 수행
+ - 커널이 각 스레드를 개별적으로 관리
+ - 프로세스 내 스레들이 병령 수행 가능
+ - 하나의 스레드가 block되어도 다른 스레드는 계속 작업 가능
 
+ - parallelism과 Concurrency를 지원하지만, kernel thread은 kernel을 통해서 operation을 하기에 무겁다
+   
+#### 유저 스레드
+ - 유저 영역의 **라이브러리**로 구현된 스레드
+ - 커널은 프로세스 내 유저 스레드를 알지 못한다.
+
+ - user space 안 thread library에 의해서 관리되기 때문에, system call이 필요하지 않기에 빠르지만, 하나의 user thread가 system call을 만들면 전체 thread가 blocked 상태가 된다. 또한 Parallelism을 지원하지 않는다.
 <hr>
 
 <hr>
@@ -447,8 +462,11 @@ process들끼리 바꾸는 context switching보다 thread을 변경하는 것이
 <summary>TCB란 무엇일까요?</summary>
 
 <hr>
-
-
+TCB(Thread Control Block)는 스레드를 관리하는 구조이다. ( 프로세스를 PCB를 통해 관리하는 것처럼)
+- TCB의 정보는 PCB 안에 있다.
+-각각의 kernel Thread에만 생성된다.
+-PC, register의 정보를 갖고 있다.
+-ready queue는 CPU를 기다리고 있는 TCB의 리스트로 context switch을 할 때마다 TCB들에 있는 PC, register정보로 변경한다.
 <hr>
 </details>
 
@@ -456,7 +474,24 @@ process들끼리 바꾸는 context switching보다 thread을 변경하는 것이
 <summary>멀티 스레드의 장단점에 대해 설명해주세요.</summary>
 
 <hr>
+멀티 스레드란 하나의 프로세스에 여러 스레드로 자원을 공유하며 작업을 나누어 수행하는 것입니다.
 
+### 장점
+
+- 독립적으로 프로세스를 하나하나 생성하는 것에 비해 **PC, Register, Stack **에 대한 공간만 만들면 되기 때문에 memory와 time 측면에서 이점이 있다.
+- 시스템의 처리율이 향상된다.
+- 스레드 간 데이터를 주고 받는 것이 간단하고, 시스템 자원 소모가 준다.
+- 스레드 사이의 작업량이 적어서 Context Switching이 빠르다(캐시 메모리를 비울 필요가 없다)
+  - Non-blocking system call을 하여 효율적이다.
+     - Single thread는 I/O작업을 하면 process전체가 waiting으로 가게 되는 blocking system인데 multi-thread process같은 경우는 하나의 thread가 I/O작업을 하여 해당 thread가 waiting으로 가더라도 다른 thread가 CPU를 할당받아 사용할 수 있는 Non-blocking system이다.
+ - IPC 없이 Shared Memory에 접근 가능하기 때문에 응답 시간과 통신 비용이 단축된다.
+
+### 단점
+
+- 자원을 공유하기에 bottle neck, deadlock와 같은 동기화 문제가 발생할 수 있다.
+- 주의 깊은 설계가 필요하고, 디버깅이 어렵다.
+- 하나의 스레드가 전체 프로세스에 영향을 준다.
+- 단일 프로세스 시스템의 경우 필요 없다.
 <hr>
 </details>
 
@@ -464,6 +499,19 @@ process들끼리 바꾸는 context switching보다 thread을 변경하는 것이
 <summary>멀티 스레드와 멀티 프로세스의 차이에 대해 설명해주세요</summary>
 
 <hr>
+> 멀티 프로세스는 하나의 프로그램을 여러개의 프로세스로 구성해서 각 프로세스가 하나의 작업을 처리하는 것이다.
+> 멀티 스레드는 하나의 프로세스에 여러 스레드가 자원을 공유하며 작업을 나누어 수행하는 것이다.
+
+차이 
+
+|멀티 프로세스 | 멀티 스레드 | 
+|-------|-------|
+| | 작은 메모리 공간 차지, Context Switching이 빠르다.|
+| | 동기화 문제, 하나의 스레드 장애가 전체 스레드 종료로 이어질 수도 있다|
+|프로세스 끼리 영향을 주지 않아 안정성이 높다.| |
+| 많은 메모리 공간과 CPU 시간을 차지한다. | |
+|동시에 여러 작업 수행| 동시에 여러 작업 수행|
+
 
 <hr>
 </details>
@@ -473,6 +521,31 @@ process들끼리 바꾸는 context switching보다 thread을 변경하는 것이
 <summary>장기, 중기, 단기 스케줄러에 대해 설명해주세요.</summary>
 
 <hr>
+
+#### 장기 스케줄러(job scheduler, 작업 스케줄러)
+
+어떤 프로세스를 준비 큐에 진입시킬지 결정한다.
+
+레디 큐에 있는 작업들은 CPU에서 실행되기 위해 프로세스 메모리를 보유하여야 하여, 장기 스케줄러는 메모리를 할당하는 문제에 관여한다 -> 메모리 할당 승인을 결정
+
+메모리에 올라가 있는 프로세스의 수를 조절한다.
+>현대의 시분할 시스템의 OS에서는 프로세스가 시작 상태가 되면 장기 스케줄러 없이 곧바로 프로세스에 메모리를 할당해서 준비큐에 넣어준다. -> 장기 스케줄러 대신 중기 스케줄러 사용
+
+
+#### 단기 스케줄러( CPU scheduler)
+
+Ready Queue의 프로세스 중에서 어떤 프로세스를 다음 번에 실행 상태로 만들 것인지 결정
+
+시분할 시스템에서는 타이머가 인터럽트를 발생하면 단기 스케줄러 호출
+
+
+#### 중기 스케줄러
+
+현대 시분할 시스템용 OS에서는 중기 스케줄러를 더 많이 둔다(장기 스케줄러 대신)
+
+너무 많은 프로세스에게 메모리를 할당해, 시스템의 성능이 저하되는 경우를 해결하기 위해 적재된 프로세스의 수를 동적으로 저절하기 위해 추가된 스케줄러이다. 
+
+프로세스 당 보유 메모리양이 지나치게 적어진 경우, 일부 프로세스를 메모리에서 Swap out시키는 역할을 수행한다.
 
 <hr>
 </details>

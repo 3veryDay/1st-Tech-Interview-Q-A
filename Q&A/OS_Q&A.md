@@ -555,6 +555,38 @@ Ready Queue의 프로세스 중에서 어떤 프로세스를 다음 번에 실�
 
 <hr>
 
+### Non-Preemptive
+
+- proess가 CPU를 스스로 놔줄 때까지 기다리는 스케줄링 방식이다.
+- Process들은 종료 또는 I/O 작업을 하기 전까지는 CPU를 지속적으로 사용할 수 있다.
+- context switch가 적게 일어나기 때무에 Overhead가 적다.
+- 새로운 작업을 요청해도 자신의 순서까지 오래 기다려야 할 수도 있기 때문에 response time이 오래 걸린다.
+- 바로바로 반응해야 하는 프로그램에는 좋지 않다.
+
+### Preemptive
+
+- interrupt을 통해 **강제로** CPU를 뺏는 방법이다.
+- 현대 대부분의 OS는 Preemptive이다.
+- race condition 이 발생한다.
+
+> Race Condition이란 둘 이상의 입력 또는 조작의 타이밍이나 순서 등이 결과 값에 영향을 줄 수 있는 상태
+> 두개 이상의 프로세스가 공유 자원에 접근할 때, 결과값에 영향을 줄 수 있는 상황으로, 동시 접근 시 자료의 일관성을 해치는 결과가 나타난다.
+
+>이를 예방하기 위해서는 세마포어나 뮤텍스를 사용해야한다.
+
+|Semaphore | Mutex | 
+|------|------|
+|동기화를 위한 도|동기화를 위한 도구|
+|Signaling 메커니즘|Locking 메커니즘|
+|Lock을 걸지 않은 Thread도 signal을 통해 Lock 해제 가능 | Locking 메커니즘으로 Lock을 걸은 Thread만이 임계 영역을 나갈 때 Lock을 해제|
+Semaphore는 Signaling 메커니즘을 사용한다.
+
+락을 걸지 않은 쓰레드도 Signal을 해제할 수 있기 때문에 wait 함수를 호출한 Thread만이 signal 함수를 호출할 수 있는 뮤텍스와 다르다.
+
+wait을 호출하면 Semaphore의 카운트를 1 줄이고, Semaphore의 카운트가 0보다 작거나 같아질 경우에 Lock이 실행된다.
+
+뮤텍스는 자원에 대한 접근을 동기화하기 위해 사용되는 상호배제 기술이다. 뮤텍스는 Locking 메커니즘으로 오직 하나의 Thread만이 동일한 시점에 Mutex를 얻어 임계 영역에 들어올 수 있고, 이 Thread 만이 임계 영역에서 나갈 때 뮤텍스를 해제할 수 있다.
+
 <hr>
 </details>
 
@@ -562,6 +594,11 @@ Ready Queue의 프로세스 중에서 어떤 프로세스를 다음 번에 실�
 <summary>CPU Scheduling을 측정하는 척도에는 무엇이 있을까요?</summary>
 
 <hr>
+1. CPU utilization : CPU를 얼마나 사용하는지 => 높을 수록 효율적이다.
+2. Throughput : 시간당 수행한 작업의 양
+3. Turnaround Time : 프로세스가 생성되고 종료되기까지 걸린 시간, waiting 시간, 실행 시간 다 합친 것
+4. Waiting Time : ready queue에서 기다린 총 시간, waiting queue에서 기다린 전체 시간
+5. Response time : 프로세스가 생성되고 **첫번째 응답**이 있기까지 걸린 시간, Interactive and real time system 프로그램 측정에 사용된다. 
 
 <hr>
 </details>
@@ -570,7 +607,7 @@ Ready Queue의 프로세스 중에서 어떤 프로세스를 다음 번에 실�
 <summary>CPU Scheduling의 종류에는 무엇이 있을까요?</summary>
 
 <hr>
-
+여기 시간 들여
 <hr>
 </details>
 
@@ -578,7 +615,9 @@ Ready Queue의 프로세스 중에서 어떤 프로세스를 다음 번에 실�
 <summary>Starvation은 어떤 스케줄링에서 발생하는 문제일까요?</summary>
 
 <hr>
+Priority Scheduling에서 우선 순위가 높은 process들이 계속 들어오면 우선순위가 낮은 process는 실행되지 않고, 무한정 대기하게 되는 이러한 문제를 Starvation이라고 한다.
 
+priority Scheduling, SJF Scheduling에서 발생한다.
 <hr>
 </details>
 
@@ -586,7 +625,7 @@ Ready Queue의 프로세스 중에서 어떤 프로세스를 다음 번에 실�
 <summary>Aging이란 무엇일까요?</summary>
 
 <hr>
-
+Aging이란 Starvation을 해결하는 방법 중 하나로, process마다 시간이 지나면 지날수록 우선순위를 높여주는 방식이다.
 <hr>
 </details>
 
@@ -595,6 +634,17 @@ Ready Queue의 프로세스 중에서 어떤 프로세스를 다음 번에 실�
 
 <hr>
 
+#### 선점 스케줄링
+- SRTF
+- RR
+- Multi level Queue
+- 다단계 피드백 큐
+
+#### 비선점 스케줄링
+- FCFS
+- SJF
+- Priority
+- HRN
 <hr>
 </details>
 
@@ -603,6 +653,27 @@ Ready Queue의 프로세스 중에서 어떤 프로세스를 다음 번에 실�
 <summary>경쟁 상태(Race Condition)이란 무엇이며 언제 발생할까요?</summary>
 
 <hr>
+multicore CPU에서 두개 이상의 프로세스가 parallel하게 실행되는 경우, 또는 두개 이상의 프로세스가 하나의 single core에서 concurrently하게 실행되는 등 **공유 자원에 동시 접근하는 경우, 두개 이상의 프로세스를 두고 경쟁하는 문제를 Race Condition**이라고 한다.
+
+### Race condition이 발생하는 경우
+
+1. Kernel작업 중, **Interrupt**
+
+문제점 : 커널 모드에서 데이터를 로드하여 작업을 수행하다가 인터럽트가 발생해서 같은 데이터를 조작하는 경우
+
+해결법 : 커널 모드에서 작업을 수행하는 동안, Interrupt을 disable시켜, CPU 제어권을 가져가지 못하도록 한다. 
+
+2. 프로세스가 System Call을 해서 커널모드로 진입하여 작업 수행 도중 **Context Switching**이 발생했을 경우
+
+문제점 : P1이 커널모드에서 데이터를 조작하는 도중, 시간이 초과되어 CPU제어권이 P2로 넘어가 데이터를 조작하는 경우
+
+해결법: 프로세스가 커널모드에서 작업을 하는 경우 시간이 초과되어도 CPU 제어권이 다른 프로세스에게 넘어가지 않도록 함
+
+3. 멀티 프로세서 환경에서 **공유 메모리 내의 커널 데이터에 접근**할 때
+
+문제점 : 멀티 프로세서 환경에서 2개의 CPU까 동시에 커널 내부의 공유 데이터에 접근.조작하는 경우
+
+해결법 : 커널 내부에 있는 공유 데이터에 접근할 때마다, 그 데이터에 대해서 lock/unlock을 함
 
 <hr>
 </details>
